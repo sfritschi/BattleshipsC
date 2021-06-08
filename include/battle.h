@@ -8,6 +8,12 @@
 #define NUM_SHIPS (5)
 #define NUM_SHIP_PARTS (17)
 
+// Player modes
+enum MODE {
+	HOST = 'h',
+	JOIN = 'j'
+};
+
 // Colors used for symbols
 enum COLORS {
 	DEFAULT_WHITE = 0,
@@ -68,7 +74,7 @@ void print_str_col(const char *, const unsigned int);
 // POST: -
 void print_results(const int, const int, const char *,
                    const int, const int, const char *,
-                   const int, const int);
+                   const int, const int, enum MODE);
 
 // PRE: Fills player board with '*' (water)
 // POST: Initalized board

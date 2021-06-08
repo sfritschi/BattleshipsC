@@ -62,15 +62,16 @@ void print_str_col(const char *str, const unsigned int color) {
 // POST: -
 void print_results(const int row, const int col, const char *player_board,
                    const int opp_row, const int opp_col, const char *opponent_board,
-                   const int player_ship_count, const int opponent_ship_count) {
+                   const int player_ship_count, const int opponent_ship_count,
+                   enum MODE mode) {
 	const int r = row - 1;
 	const int c = col - 1;
 	const int o_r = opp_row - 1;
 	const int o_c = opp_col - 1;
 	
 	// Only print result if respective player hasn't lost already
-	
-	if (player_ship_count > 0) {
+	// Special case if host or client won
+	if (player_ship_count > 0 || mode == JOIN) {
 		int is_player_hit = opponent_board[r * BOARD_LENGTH + c] == 'X';
 		printf("You shot: (%d, %d) ", row, col);
 		if (is_player_hit) {
@@ -81,7 +82,7 @@ void print_results(const int row, const int col, const char *player_board,
 		printf("\n");
 	}
 	
-	if (opponent_ship_count > 0) {
+	if (opponent_ship_count > 0 || mode == HOST) {
 		int is_opponent_hit = player_board[o_r * BOARD_LENGTH + o_c] == 'X';
 		printf("Opponent shot: (%d, %d) ", opp_row, opp_col);
 		if (is_opponent_hit) {

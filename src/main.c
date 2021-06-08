@@ -11,14 +11,9 @@
 
 #define PORT (8888)
 
-// globals
+// global counters
 int player_ship_count = NUM_SHIP_PARTS;
 int opponent_ship_count = NUM_SHIP_PARTS;
-
-enum MODE {
-	HOST = 'h',
-	JOIN = 'j'
-};
 
 // PRE: Name of host in network
 // POST: Returns ip address (string)
@@ -250,7 +245,7 @@ int main(int argc, char *argv[]) {
 end:
 		// Print results of shots
 		print_results(row, col, player_board, opp_row, opp_col, opponent_board,
-		                player_ship_count, opponent_ship_count);
+		                player_ship_count, opponent_ship_count, mode);
 		
 		if (player_ship_count == 0 || opponent_ship_count == 0) {
 			// Print updated board (with opponent ships)
