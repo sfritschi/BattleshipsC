@@ -5,8 +5,8 @@ TARGET=battle
 all: ${TARGET}
 .PHONY: all, clean
 
-${TARGET}: main.c battle.c battle.h
-		${C} ${CFLAGS} -o $@ $^
+${TARGET}: src/main.c src/battle.c 
+		${C} ${CFLAGS} -o $@ $^ -Iinclude
 
 clean:
 		rm -f ${TARGET}
