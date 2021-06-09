@@ -1,0 +1,33 @@
+#ifndef COMMUNICATE_H
+#define COMMUNICATE_H
+
+#include <stdlib.h>
+#include <string.h>  // memset
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <limits.h>
+
+// PRE: Name of host in network
+// POST: Returns ip address (string)
+int hostname_to_ip(const char *, char *);
+
+// PRE: Connects host (server) with joinee (client)
+// POST: Returns 0 on success, 1 otherwise
+int connect_players(int *, int *, struct sockaddr_in *, 
+                    struct sockaddr_in *, enum MODE);
+
+// PRE: Send 'send buffer' to opponent and receive opponent buffer in
+//      Receive buffer
+// POST: -
+int sendrecv(const int, void *, void *, size_t, enum MODE);
+
+// PRE: Exchange shots between player and opponent
+// POST: Returns 1 on error, -1 if client (first to move) won already
+//       and 0 otherwise
+int exchange_shots(const int, int *, int *, size_t, char *, char *,
+                   int *, int *, enum MODE);
+
+#endif /* COMMUNICATE_H */

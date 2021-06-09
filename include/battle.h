@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+// Game parameters
 #define BOARD_LENGTH (10)
 #define BOARD_SIZE (100)
 #define NUM_SHIPS (5)

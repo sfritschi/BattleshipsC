@@ -2,11 +2,14 @@ C=gcc
 CFLAGS=-Wall -Wpedantic -Wextra -O3
 
 TARGET=battle
+SOURCE=src
+HEADER=include
+
 all: ${TARGET}
 .PHONY: all, clean
 
-${TARGET}: src/main.c src/battle.c 
-		${C} ${CFLAGS} -o $@ $^ -Iinclude
+${TARGET}: ${SOURCE}/*.c 
+		${C} ${CFLAGS} -o $@ $^ -I${HEADER}
 
 clean:
 		rm -f ${TARGET}

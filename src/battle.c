@@ -273,7 +273,7 @@ void place_ship(const struct ship_t *ship, const int num, char *player_board) {
 	}
 	
 	int row, col;
-	printf("\nEnter: ");
+	printf("Enter: ");
 	print_str_col("row", GREEN);
 	printf(" ");
 	print_str_col("col", MAGENTA); 
