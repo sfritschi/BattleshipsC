@@ -20,13 +20,12 @@ int connect_players(int *, int *, struct sockaddr_in *,
                     struct sockaddr_in *, enum MODE);
 
 // PRE: Send 'send buffer' to opponent and receive opponent buffer in
-//      Receive buffer
+//      'receive buffer'
 // POST: -
 int sendrecv(const int, void *, void *, size_t, enum MODE);
 
 // PRE: Exchange shots between player and opponent
-// POST: Returns 1 on error, -1 if client (first to move) won already
-//       and 0 otherwise
+// POST: Returns 1 on error and 0 otherwise
 int exchange_shots(const int, int *, int *, size_t, char *, char *,
                    int *, int *, enum MODE);
 
