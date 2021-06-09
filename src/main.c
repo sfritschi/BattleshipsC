@@ -1,16 +1,6 @@
 #include "battle.h"
 #include "communicate.h"
 
-#include <stdlib.h>
-#include <string.h>  // memset
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <limits.h>
-
-
 // Global variables to keep track of game progress
 int player_ship_count = NUM_SHIP_PARTS;
 int player_score = 0;
