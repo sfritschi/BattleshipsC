@@ -92,10 +92,10 @@ beginning:
 		player_score += 1;
 	} else if (player_ship_count == 0) {
 		printf("YOU LOST! :(\n");
-		opponent_score += 3;
+		opponent_score += 2;
 	} else {
 		printf("YOU WON! :)\n");
-		player_score += 3;
+		player_score += 2;
 	}
 	printf("Your score: %d\n", player_score);
 	printf("Opponent score: %d\n", opponent_score);
@@ -117,6 +117,11 @@ beginning:
 		// Reset counters
 		player_ship_count = NUM_SHIP_PARTS;
 		opponent_ship_count = NUM_SHIP_PARTS;
+		// Reset number of hits taken
+		for (int i = 0; i < NUM_SHIPS; ++i) {
+			player_ships[i].hits_taken = 0;
+			opponent_ships[i].hits_taken = 0;
+		}
 		// Go back to beginning
 		goto beginning;
 	}
