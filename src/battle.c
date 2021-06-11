@@ -60,38 +60,20 @@ void print_str_col(const char *str, const unsigned int color) {
 
 // PRE: Print results of shots fired at individual boards
 // POST: -
-void print_results(const int row, const int col, const char *player_board,
-                   const int opp_row, const int opp_col, const char *opponent_board,
-                   const int player_ship_count, const int opponent_ship_count,
-                   enum MODE mode) {
-	const int r = row - 1;
-	const int c = col - 1;
-	const int o_r = opp_row - 1;
-	const int o_c = opp_col - 1;
+void print_results(const int row, const int col, const int is_hit, 
+                   enum PLAYER player_type) {
 	
-	// Only print result if respective player hasn't lost already
-	// Special case if host or client won
-	if (player_ship_count > 0 || mode == JOIN) {
-		int is_player_hit = opponent_board[r * BOARD_LENGTH + c] == 'X';
-		printf("You shot: (%d, %d) ", row, col);
-		if (is_player_hit) {
-			print_str_col("HIT!", RED);
-		} else {
-			print_str_col("MISS!", CYAN);
-		}
-		printf("\n");
-	}
+	if (player_type == SELF)
+	    printf("You shot: (%d, %d) ", row, col);
+	else
+	    printf("Opponent shot: (%d, %d) ", row, col);
 	
-	if (opponent_ship_count > 0 || mode == HOST) {
-		int is_opponent_hit = player_board[o_r * BOARD_LENGTH + o_c] == 'X';
-		printf("Opponent shot: (%d, %d) ", opp_row, opp_col);
-		if (is_opponent_hit) {
-			print_str_col("HIT!", RED);
-		} else {
-			print_str_col("MISS!", CYAN);
-		}
-		printf("\n");
+	if (is_hit) {
+		print_str_col("HIT!", RED);
+	} else {
+		print_str_col("MISS!", CYAN);
 	}
+	printf("\n");
 }
 
 // PRE: Fills player board with '*' (water)
@@ -132,7 +114,7 @@ int is_overlap(const char *board, const int length,
 }
 
 // PRE: Shoot opponent board at given coordinates
-// POST: 1 if target coordinates were invalid, 0 if ok
+// POST: -1 if target coordinates were invalid, 0 if MISS 1 if HIT
 int shoot(const int row, const int col, char *board, int *counter) {
 	const int r = row - 1;	
 	const int c = col - 1;
@@ -147,14 +129,14 @@ int shoot(const int row, const int col, char *board, int *counter) {
 			board[index] = HIT;
 			// Update counter
 			(*counter)--;
-			return 0;  // ok
+			return 1;  // ok
 		} else if (target == WATER) {
 			board[index] = MISS;
 			return 0;  // ok
 		}
 		
 	}
-	return 1;
+	return -1;
 }
 
 // PRE: Draws board to console

@@ -53,18 +53,14 @@ beginning:
 	int player_coords[2], opponent_coords[2];
 	// Game loop
 	while (1) {
-		int ans = exchange_shots(socket_cl, player_coords, opponent_coords,
+		int err = exchange_shots(socket_cl, player_coords, opponent_coords,
 		                         coords_message_size, player_board,
 		                         opponent_board, &player_ship_count,
 		                         &opponent_ship_count, mode);
-		if (ans == 1) {
+		if (err != 0) {
 			// Error occured -> exit
 			break;
 		}
-		// Print results of shots
-		print_results(player_coords[0], player_coords[1], player_board,
-		              opponent_coords[0], opponent_coords[1], opponent_board,
-		              player_ship_count, opponent_ship_count, mode);
 		
 		if (player_ship_count == 0 || opponent_ship_count == 0) {
 			// Print updated board (with opponent ships)

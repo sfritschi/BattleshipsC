@@ -44,6 +44,11 @@ enum STATE {
 	PLAYING
 };
 
+enum PLAYER {
+	SELF,
+	OPPONENT
+};
+
 // Ship datatype
 struct ship_t {
 	char *name;
@@ -73,9 +78,7 @@ void print_str_col(const char *, const unsigned int);
 
 // PRE: Print results of shots fired at individual boards
 // POST: -
-void print_results(const int, const int, const char *,
-                   const int, const int, const char *,
-                   const int, const int, enum MODE);
+void print_results(const int, const int, const int, enum PLAYER);
 
 // PRE: Fills player board with '*' (water)
 // POST: Initalized board

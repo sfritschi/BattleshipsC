@@ -152,15 +152,21 @@ int exchange_shots(const int socket_cl, int *player_coords,
                    char *player_board, char *opponent_board,
                    int *player_ship_count, int *opponent_ship_count,
                    enum MODE mode) {
-    int row = 0, col = 0;
+    int row, col;
+    int opp_row, opp_col;
+    int is_hit;
+    
 	if (mode == HOST) {
 		printf("Waiting for opponent's move...\n");
 		if (recv(socket_cl, opponent_coords, coord_size, 0) <= 0) {
 			perror("Target recv failed");
 			return 1;
 		}
+		opp_row = opponent_coords[0]; opp_col = opponent_coords[1];
 		// Shoot own board
-		shoot(opponent_coords[0], opponent_coords[1], player_board, player_ship_count);
+		is_hit = shoot(opp_row, opp_col, player_board, player_ship_count);
+		// Print results
+		print_results(opp_row, opp_col, is_hit, OPPONENT);
 		// Check if opponent has won already
 		if (*player_ship_count == 0) {
 			return 0;
@@ -169,13 +175,14 @@ int exchange_shots(const int socket_cl, int *player_coords,
 		printf("Enter shoot coords: ");
 		while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		// Shoot opponent board
-		while(shoot(row, col, opponent_board, opponent_ship_count) != 0) {
+		while((is_hit = shoot(row, col, opponent_board, opponent_ship_count)) == -1) {
 			printf("\nInvalid coordinates, try again: ");
 			while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		}
-		
 		player_coords[0] = row;
 		player_coords[1] = col;
+		// Print results
+		print_results(row, col, is_hit, SELF);
 		// Send shoot coordinates to opponent
 		if (write(socket_cl, player_coords, coord_size) < 0) {
 			perror("Send failed");
@@ -185,13 +192,14 @@ int exchange_shots(const int socket_cl, int *player_coords,
 		printf("Enter shoot coords: ");
 		while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		// Shoot opponent board
-		while(shoot(row, col, opponent_board, opponent_ship_count) != 0) {
+		while((is_hit = shoot(row, col, opponent_board, opponent_ship_count)) == -1) {
 			printf("\nInvalid coordinates, try again: ");
 			while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		}
-		
 		player_coords[0] = row;
 		player_coords[1] = col;
+		// Print results
+		print_results(row, col, is_hit, SELF);
 		// Send shoot coordinates to opponent
 		if (send(socket_cl, player_coords, coord_size, 0) < 0) {
 			perror("Send failed");
@@ -206,8 +214,11 @@ int exchange_shots(const int socket_cl, int *player_coords,
 			perror("Target recv failed");
 			return 1;
 		}
+		opp_row = opponent_coords[0]; opp_col = opponent_coords[1];
 		// Shoot own board
-		shoot(opponent_coords[0], opponent_coords[1], player_board, player_ship_count);
+		is_hit = shoot(opp_row, opp_col, player_board, player_ship_count);
+		// Print results
+		print_results(opp_row, opp_col, is_hit, OPPONENT);
 	}
 	return 0;
 }
