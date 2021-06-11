@@ -169,11 +169,7 @@ int exchange_shots(const int socket_cl, size_t coord_size,
 		               player_ship_count, player_ships, SELF);
 		// Print results
 		print_results(opp_row, opp_col, is_hit, OPPONENT);
-		// Check if opponent has won already
-		if (*player_ship_count == 0) {
-			return 0;
-		}
-		
+	
 		printf("Enter shoot coords: ");
 		while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		// Shoot opponent board
@@ -208,10 +204,6 @@ int exchange_shots(const int socket_cl, size_t coord_size,
 		if (send(socket_cl, player_coords, coord_size, 0) < 0) {
 			perror("Send failed");
 			return 1;
-		}
-		// Check if won already
-		if (*opponent_ship_count == 0) {
-			return 0;
 		}
 		printf("Waiting for opponent's move...\n");
 		if (recv(socket_cl, opponent_coords, coord_size, 0) <= 0) {

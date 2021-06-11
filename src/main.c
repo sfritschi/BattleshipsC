@@ -86,12 +86,16 @@ beginning:
 		return 1;
 	}
 	// Determine who won
-	if (player_ship_count == 0) {
+	if (player_ship_count == 0 && opponent_ship_count == 0) {
+		printf("DRAW! :|\n");
+		opponent_score += 1;
+		player_score += 1;
+	} else if (player_ship_count == 0) {
 		printf("YOU LOST! :(\n");
-		opponent_score++;
+		opponent_score += 3;
 	} else {
 		printf("YOU WON! :)\n");
-		player_score++;
+		player_score += 3;
 	}
 	printf("Your score: %d\n", player_score);
 	printf("Opponent score: %d\n", opponent_score);
