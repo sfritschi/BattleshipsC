@@ -147,10 +147,11 @@ int sendrecv(const int socket_cl, void *send_buf, void *recv_buf,
 
 // PRE: Exchange shots between player and opponent
 // POST: Returns 1 on error and 0 otherwise
-int exchange_shots(const int socket_cl, int *player_coords,
-                   int *opponent_coords, size_t coord_size,
-                   char *player_board, char *opponent_board,
-                   int *player_ship_count, int *opponent_ship_count,
+int exchange_shots(const int socket_cl, size_t coord_size, 
+                   int *player_coords, char *player_board, const int *player_map, 
+                   struct ship_t *player_ships, int *player_ship_count, 
+                   int *opponent_coords, char *opponent_board, const int *opponent_map,
+                   struct ship_t *opponent_ships, int *opponent_ship_count,
                    enum MODE mode) {
     int row, col;
     int opp_row, opp_col;
@@ -164,7 +165,8 @@ int exchange_shots(const int socket_cl, int *player_coords,
 		}
 		opp_row = opponent_coords[0]; opp_col = opponent_coords[1];
 		// Shoot own board
-		is_hit = shoot(opp_row, opp_col, player_board, player_ship_count);
+		is_hit = shoot(opp_row, opp_col, player_board, player_map, 
+		               player_ship_count, player_ships, SELF);
 		// Print results
 		print_results(opp_row, opp_col, is_hit, OPPONENT);
 		// Check if opponent has won already
@@ -175,8 +177,9 @@ int exchange_shots(const int socket_cl, int *player_coords,
 		printf("Enter shoot coords: ");
 		while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		// Shoot opponent board
-		while((is_hit = shoot(row, col, opponent_board, opponent_ship_count)) == -1) {
-			printf("\nInvalid coordinates, try again: ");
+		while((is_hit = shoot(row, col, opponent_board, opponent_map,
+		                      opponent_ship_count, opponent_ships, OPPONENT)) == -1) {
+			printf("Invalid coordinates, try again: ");
 			while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		}
 		player_coords[0] = row;
@@ -192,8 +195,9 @@ int exchange_shots(const int socket_cl, int *player_coords,
 		printf("Enter shoot coords: ");
 		while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		// Shoot opponent board
-		while((is_hit = shoot(row, col, opponent_board, opponent_ship_count)) == -1) {
-			printf("\nInvalid coordinates, try again: ");
+		while((is_hit = shoot(row, col, opponent_board, opponent_map,
+		                      opponent_ship_count, opponent_ships, OPPONENT)) == -1) {
+			printf("Invalid coordinates, try again: ");
 			while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 		}
 		player_coords[0] = row;
@@ -216,7 +220,8 @@ int exchange_shots(const int socket_cl, int *player_coords,
 		}
 		opp_row = opponent_coords[0]; opp_col = opponent_coords[1];
 		// Shoot own board
-		is_hit = shoot(opp_row, opp_col, player_board, player_ship_count);
+		is_hit = shoot(opp_row, opp_col, player_board, player_map,
+		               player_ship_count, player_ships, SELF);
 		// Print results
 		print_results(opp_row, opp_col, is_hit, OPPONENT);
 	}

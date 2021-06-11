@@ -53,8 +53,12 @@ enum PLAYER {
 struct ship_t {
 	char *name;
 	int length;
-	int amount;
+	int hits_taken;
 };
+
+// Externals
+extern struct ship_t player_ships[NUM_SHIPS];
+extern struct ship_t opponent_ships[NUM_SHIPS];
 
 // PRE: Checks if input is valid by comparing against expected value
 // POST: -
@@ -82,7 +86,7 @@ void print_results(const int, const int, const int, enum PLAYER);
 
 // PRE: Fills player board with '*' (water)
 // POST: Initalized board
-void init_board(char *);
+void init(char *, int *);
 
 // PRE: Check if coordinates (row, col) lie inside board
 // POST: 1 if coordinates lie inside, 0 otherwise
@@ -96,7 +100,8 @@ int is_overlap(const char *, const int,
 
 // PRE: Shoot opponent board at given coordinates
 // POST: 1 if target coordinates were invalid, 0 if ok
-int shoot(const int, const int, char *, int *);
+int shoot(const int, const int, char *, const int *, int *, 
+          struct ship_t *, enum PLAYER);
 
 // PRE: Draws board to console
 // POST: -
@@ -104,16 +109,14 @@ void draw_board(const char *);
 
 // PRE: Draws player board (left) next to opponent board (right)
 // POST: -
-void draw_board_side_by_side(const char *, 
-                             const char *,
-                             enum STATE);
+void draw_board_side_by_side(const char *, const char *, enum STATE);
 
 // PRE: Place all ships within board given player input
 // POST: -
-void place_ship(const struct ship_t *, const int, char *);
+void place_ship(const struct ship_t *, char *, int *, const int);
 
 // PRE: Based on user input, place all ships in board
 // POST: -
-void place_all_ships(char *);
+void place_all_ships(char *, int *);
 
 #endif /* BATTLE_H */

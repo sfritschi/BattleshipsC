@@ -26,7 +26,11 @@ int sendrecv(const int, void *, void *, size_t, enum MODE);
 
 // PRE: Exchange shots between player and opponent
 // POST: Returns 1 on error and 0 otherwise
-int exchange_shots(const int, int *, int *, size_t, char *, char *,
-                   int *, int *, enum MODE);
+int exchange_shots(const int, size_t, 
+                   int *, char *, const int *, 
+                   struct ship_t *, int *, 
+                   int *, char *, const int *,
+                   struct ship_t *, int *,
+                   enum MODE mode);
 
 #endif /* COMMUNICATE_H */

@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
 	int socket_serv, socket_cl;
 	struct sockaddr_in server, client;
 	const size_t board_message_size = BOARD_SIZE * sizeof(char);
+	const size_t map_message_size = BOARD_SIZE * sizeof(int);
 	const size_t coords_message_size = 2 * sizeof(int);
 	
 	// Connect host (server) with client
@@ -30,21 +31,26 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	
-	// Initialize board
+	// Initialize board and map of ships (indices in array of ships)
+	int player_map[BOARD_SIZE], opponent_map[BOARD_SIZE];
 	char player_board[BOARD_SIZE], opponent_board[BOARD_SIZE];
 	
 beginning:
-	init_board(player_board);
+	init(player_board, player_map);
 	
 	// Both players individually place ships
-	place_all_ships(player_board);
+	place_all_ships(player_board, player_map);
 	
-	// Exchange boards
-	printf("Exchanging boards\n");
+	// Exchange boards AND ship maps
+	printf("Exchanging player data\n");
 	if (sendrecv(socket_cl, player_board, opponent_board, board_message_size, mode) != 0) {
 		return 1;
 	}
-	printf("Board exchange done\n");
+	if (sendrecv(socket_cl, player_map, opponent_map, map_message_size, mode) != 0) {
+		return 1;
+	}
+	printf("Exchange done\n");
+	
 	
 	// Draw player and opponent board next to eachother
 	draw_board_side_by_side(player_board, opponent_board, PLAYING);
@@ -53,10 +59,12 @@ beginning:
 	int player_coords[2], opponent_coords[2];
 	// Game loop
 	while (1) {
-		int err = exchange_shots(socket_cl, player_coords, opponent_coords,
-		                         coords_message_size, player_board,
-		                         opponent_board, &player_ship_count,
-		                         &opponent_ship_count, mode);
+		int err = exchange_shots(socket_cl, coords_message_size, 
+                   player_coords, player_board, player_map, 
+                   player_ships, &player_ship_count, 
+                   opponent_coords, opponent_board, opponent_map,
+                   opponent_ships, &opponent_ship_count,
+                   mode);
 		if (err != 0) {
 			// Error occured -> exit
 			break;

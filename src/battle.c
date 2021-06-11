@@ -1,12 +1,21 @@
 #include "battle.h"
 
-// Array of ships
-const struct ship_t ships[NUM_SHIPS] = {
-	{"CARRIER", 5, 1},
-	{"BATTLESHIP", 4, 1},
-	{"CRUISER", 3, 1},
-	{"SUBMARINE", 3, 1},
-	{"DESTROYER", 2, 1}
+#include <string.h>
+
+// Global array of ships for both player and opponent
+struct ship_t player_ships[NUM_SHIPS] = {
+	{"CARRIER", 5, 0},
+	{"BATTLESHIP", 4, 0},
+	{"CRUISER", 3, 0},
+	{"SUBMARINE", 3, 0},
+	{"DESTROYER", 2, 0}
+};
+struct ship_t opponent_ships[NUM_SHIPS] = {
+	{"CARRIER", 5, 0},
+	{"BATTLESHIP", 4, 0},
+	{"CRUISER", 3, 0},
+	{"SUBMARINE", 3, 0},
+	{"DESTROYER", 2, 0}
 };
 
 // PRE: Checks if input is valid by comparing against expected value
@@ -63,10 +72,11 @@ void print_str_col(const char *str, const unsigned int color) {
 void print_results(const int row, const int col, const int is_hit, 
                    enum PLAYER player_type) {
 	
-	if (player_type == SELF)
+	if (player_type == SELF) {
 	    printf("You shot: (%d, %d) ", row, col);
-	else
+	} else {
 	    printf("Opponent shot: (%d, %d) ", row, col);
+	}
 	
 	if (is_hit) {
 		print_str_col("HIT!", RED);
@@ -78,10 +88,12 @@ void print_results(const int row, const int col, const int is_hit,
 
 // PRE: Fills player board with '*' (water)
 // POST: Initalized board
-void init_board(char *player_board) {
+void init(char *player_board, int *player_map) {
 	int i;
 	for (i = 0; i < BOARD_SIZE; ++i) {
 		player_board[i] = WATER;
+		
+		player_map[i] = -1;  // No ship present
 	}	
 }
 
@@ -115,7 +127,8 @@ int is_overlap(const char *board, const int length,
 
 // PRE: Shoot opponent board at given coordinates
 // POST: -1 if target coordinates were invalid, 0 if MISS 1 if HIT
-int shoot(const int row, const int col, char *board, int *counter) {
+int shoot(const int row, const int col, char *board, const int *map,
+                int *counter, struct ship_t *ships, enum PLAYER player_type) {
 	const int r = row - 1;	
 	const int c = col - 1;
 		
@@ -127,11 +140,25 @@ int shoot(const int row, const int col, char *board, int *counter) {
 		if (target == SHIP) {
 			// Shoot! Indicate whether the ship was hit or missed
 			board[index] = HIT;
+			// Check which ship was hit
+			const int ship_id = map[index];
+			struct ship_t *target_ship = &ships[ship_id];
+			// Increment hit counter of ship
+			int hits = ++target_ship->hits_taken;
+			// Check if ship was destroyed
+			if (hits == target_ship->length) {
+				if (player_type == SELF)
+					printf("Your %s has been destroyed!\n", target_ship->name);
+				else
+				    printf("Enemy %s has been destroyed!\n", target_ship->name);
+			}
 			// Update counter
 			(*counter)--;
+			
 			return 1;  // ok
 		} else if (target == WATER) {
 			board[index] = MISS;
+			
 			return 0;  // ok
 		}
 		
@@ -245,8 +272,9 @@ void draw_board_side_by_side(const char *player_board,
 
 // PRE: Place all ships within board given player input
 // POST: -
-void place_ship(const struct ship_t *ship, const int num, char *player_board) {
-	printf("Placing ship #%d of type %s:\n", num, ship->name);
+void place_ship(const struct ship_t *ship, char *player_board,
+                int *player_map, const int ship_id) {
+	printf("Placing ship of type %s:\n", ship->name);
 	printf("Enter orientation [h,v]: ");
 	char orientation;
 	while(!is_valid_input(scanf("%c", &orientation), 1));
@@ -267,6 +295,7 @@ void place_ship(const struct ship_t *ship, const int num, char *player_board) {
 	col = col - 1;
 	
 	int i;
+	int index;
 	if (orientation == HORIZONTAL) {
 		// Make sure current ship lies within board
 		while (col < 0 || !is_inside(row, col + ship->length - 1)) {
@@ -284,10 +313,11 @@ void place_ship(const struct ship_t *ship, const int num, char *player_board) {
 	        row = row - 1;
 	        col = col - 1;
 		}
-		
+		index = row * BOARD_LENGTH + col;
 		// Place ship
 		for (i = 0; i < ship->length; ++i) {
-			player_board[row * BOARD_LENGTH + col + i] = SHIP;
+			player_board[index + i] = SHIP;
+			player_map[index + i] = ship_id;
 		}
 	} else {
 		// Make sure current ship lies within board
@@ -306,27 +336,28 @@ void place_ship(const struct ship_t *ship, const int num, char *player_board) {
 	        row = row - 1;
 	        col = col - 1;
 		}
-		
+		index = row * BOARD_LENGTH + col;
 		// Place ship
 		for (i = 0; i < ship->length; ++i) {
-			player_board[(row + i) * BOARD_LENGTH + col] = SHIP;
+			player_board[index] = SHIP;
+			player_map[index] = ship_id;
+			
+			index += BOARD_LENGTH;
 		}
 	}
 }
 
 // PRE: Based on user input, place all ships in board
 // POST: -
-void place_all_ships(char *player_board) {
+void place_all_ships(char *player_board, int *player_map) {
 	// Draw board
 	draw_board(player_board);
 	
-	int i, j;
+	int i;
 	for (i = 0; i < NUM_SHIPS; ++i) {
-		const struct ship_t current = ships[i];
-		for (j = 0; j < current.amount; ++j) {
-			place_ship(&current, current.amount, player_board);
+		const struct ship_t current = player_ships[i];
+		place_ship(&current, player_board, player_map, i);
 			
-			draw_board(player_board);
-		}
+		draw_board(player_board);
 	}
 }
