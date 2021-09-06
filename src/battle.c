@@ -32,7 +32,7 @@ int is_valid_input(const int given, const int expected) {
 
 // PRE: Print a character in a certain color to console
 // POST: -
-void print_char_col(const char c, const unsigned int color) {
+inline void print_char_col(const char c, const unsigned int color) {
 	printf("\033[1;%dm%c\033[0m", color, c); 
 }
 
@@ -63,7 +63,7 @@ void print_symbol(const char c) {
 
 // PRE: Print a string in a certain color to console
 // POST: -
-void print_str_col(const char *str, const unsigned int color) {
+inline void print_str_col(const char *str, const unsigned int color) {
 	printf("\033[1;%dm%s\033[0m", color, str); 
 }
 
@@ -99,7 +99,7 @@ void init(char *player_board, int *player_map) {
 
 // PRE: Check if coordinates (row, col) lie inside board
 // POST: 1 if coordinates lie inside, 0 otherwise
-int is_inside(const int r, const int c) {
+inline int is_inside(const int r, const int c) {
 	return (0 <= r && r < BOARD_LENGTH) && (0 <= c && c < BOARD_LENGTH);
 }
 
@@ -146,12 +146,20 @@ int shoot(const int row, const int col, char *board, const int *map,
 			// Increment hit counter of ship
 			int hits = ++target_ship->hits_taken;
 			// Check if ship was destroyed
+			char message_buf[MESSAGE_SIZE_MAX];
+			int ans;
 			if (hits == target_ship->length) {
-				if (player_type == SELF)
-					printf("Your %s has been destroyed!\n", target_ship->name);
-				else
-				    printf("Enemy %s has been destroyed!\n", target_ship->name);
+				if (player_type == SELF) {
+					ans = sprintf(message_buf, "Your %s has been destroyed!", target_ship->name);
+					print_str_col(message_buf, RED);
+					printf("\n");
+				} else {
+				    ans = sprintf(message_buf, "Enemy %s has been destroyed!", target_ship->name);
+					print_str_col(message_buf, GREEN);
+					printf("\n");
+				}
 			}
+			(void) ans;  // Don't warn me
 			// Update counter
 			(*counter)--;
 			
@@ -274,8 +282,8 @@ void draw_board_side_by_side(const char *player_board,
 // POST: -
 void place_ship(const struct ship_t *ship, char *player_board,
                 int *player_map, const int ship_id) {
-	printf("Placing ship of type %s:\n", ship->name);
-	printf("Enter orientation [h,v]: ");
+	printf("Placing ship of type %s and length %d:\n", ship->name, ship->length);
+	printf("Enter orientation: (h)orizontal/(v)ertical ");
 	char orientation;
 	while(!is_valid_input(scanf("%c", &orientation), 1));
 	while (orientation != HORIZONTAL && orientation != VERTICAL) {
@@ -287,7 +295,7 @@ void place_ship(const struct ship_t *ship, char *player_board,
 	print_str_col("row", GREEN);
 	printf(" ");
 	print_str_col("col", MAGENTA); 
-	printf(" of origin (length: %d): ", ship->length);
+	printf(" of origin (top-left most ship part): ");
 	while(!is_valid_input(scanf("%d %d", &row, &col), 2));
 	
 	// zero-based

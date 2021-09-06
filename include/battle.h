@@ -8,6 +8,7 @@
 #define BOARD_SIZE (100)
 #define NUM_SHIPS (5)
 #define NUM_SHIP_PARTS (17)
+#define MESSAGE_SIZE_MAX (40)
 
 // Player modes
 enum MODE {
