@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 	const size_t coords_message_size = 2 * sizeof(int);
 	
 	// Connect host (server) with client
-	char mode = *(argv[1]);
+	char mode = argv[1][0];
 	if (mode != HOST && mode != JOIN) {
 		fprintf(stderr, "Unrecognized mode; must be either h or j\n");
 		return 1;
@@ -58,7 +58,7 @@ beginning:
 	// Shoot coordinates message buffers
 	int player_coords[2], opponent_coords[2];
 	// Game loop
-	while (1) {
+	for (;;) {
 		int err = exchange_shots(socket_cl, coords_message_size, 
                    player_coords, player_board, player_map, 
                    player_ships, &player_ship_count, 

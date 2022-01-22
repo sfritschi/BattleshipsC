@@ -68,7 +68,10 @@ int connect_players(int *socket_serv, int *socket_cl,
 		printf("Bind done\n");
 		
 		// Listen for 1 client
-		listen(*socket_serv, 1);
+		if (listen(*socket_serv, 1) < 0) {
+            perror("Listen failed. Error");
+            return 1;
+        }
 		
 		// Accept any incoming connection
 		printf("Waiting for opponent to join...\n");
