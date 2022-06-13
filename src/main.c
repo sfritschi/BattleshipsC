@@ -15,19 +15,18 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	
-	int socket_serv, socket_cl;
-	struct sockaddr_in server, client;
+	int socket_listen = -1, socket_peer = -1;
 	const size_t board_message_size = BOARD_SIZE * sizeof(char);
 	const size_t map_message_size = BOARD_SIZE * sizeof(int);
 	const size_t coords_message_size = 2 * sizeof(int);
 	
 	// Connect host (server) with client
-	char mode = argv[1][0];
+	char mode = *argv[1];
 	if (mode != HOST && mode != JOIN) {
 		fprintf(stderr, "Unrecognized mode; must be either h or j\n");
 		return 1;
 	}
-	if (connect_players(&socket_serv, &socket_cl, &server, &client, mode) != 0) {
+	if (connect_players(&socket_listen, &socket_peer, mode) != 0) {
 		return 1;
 	}
 	
@@ -43,10 +42,10 @@ beginning:
 	
 	// Exchange boards AND ship maps
 	printf("Exchanging player data\n");
-	if (sendrecv(socket_cl, player_board, opponent_board, board_message_size, mode) != 0) {
+	if (sendrecv(socket_peer, player_board, opponent_board, board_message_size, mode) != 0) {
 		return 1;
 	}
-	if (sendrecv(socket_cl, player_map, opponent_map, map_message_size, mode) != 0) {
+	if (sendrecv(socket_peer, player_map, opponent_map, map_message_size, mode) != 0) {
 		return 1;
 	}
 	printf("Exchange done\n");
@@ -59,7 +58,7 @@ beginning:
 	int player_coords[2], opponent_coords[2];
 	// Game loop
 	for (;;) {
-		int err = exchange_shots(socket_cl, coords_message_size, 
+		int err = exchange_shots(socket_peer, coords_message_size, 
                    player_coords, player_board, player_map, 
                    player_ships, &player_ship_count, 
                    opponent_coords, opponent_board, opponent_map,
@@ -82,7 +81,8 @@ beginning:
 	// Check if error occurred
 	if (player_ship_count != 0 && opponent_ship_count != 0) {
 		printf("Connection was interrupted\n");
-		close(socket_cl);
+		close(socket_peer);
+        if (mode == HOST) close(socket_listen);
 		return 1;
 	}
 	// Determine who won
@@ -108,7 +108,7 @@ beginning:
 	printf("Do you want a rematch? [y/n]: ");
 	while(!is_valid_input(scanf("%*c%c", &player_reply), 1));
 	
-	if (sendrecv(socket_cl, &player_reply, &opponent_reply, reply_size, mode) != 0) {
+	if (sendrecv(socket_peer, &player_reply, &opponent_reply, reply_size, mode) != 0) {
 		return 1;
 	}
 		
@@ -135,8 +135,9 @@ beginning:
 		printf("DRAW!\n");
 	}
 	
-	// Close socket
-	close(socket_cl);
+	// Close sockets
+	close(socket_peer);
+    if (mode == HOST) close(socket_listen);
 	
 	return 0;
 }

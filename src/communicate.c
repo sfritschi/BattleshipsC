@@ -1,12 +1,12 @@
 #include "battle.h"
 #include "communicate.h"
 
-#define PORT (8888)
+#define PORT "8888"
 
 // PRE: Name of host in network
 // POST: Returns ip address (string)
 int hostname_to_ip(const char *hostname, char *ipstr) {
-	struct addrinfo hints, *res, *p;
+	struct addrinfo hints, *res;
 	int status;
 	
 	// Initialize hints
@@ -14,18 +14,16 @@ int hostname_to_ip(const char *hostname, char *ipstr) {
 	hints.ai_family = AF_INET;  // IPv4
 	hints.ai_socktype = SOCK_STREAM;
 	
-	if ((status = getaddrinfo(hostname, NULL, &hints, &res)) != 0) {
+	if ((status = getaddrinfo(hostname, PORT, &hints, &res))) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
 		return status;
 	}
-	
-	for (p = res; p != NULL; p = p->ai_next) {
-		void *addr;
-		struct sockaddr_in *ip = (struct sockaddr_in *)p->ai_addr;
-		addr = &(ip->sin_addr);
-		
-		inet_ntop(AF_INET, addr, ipstr, INET_ADDRSTRLEN);
-	}
+    
+	if ((status = getnameinfo(res->ai_addr, res->ai_addrlen, ipstr,
+            INET_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST))) {
+        fprintf(stderr, "getnameinfo: %s\n", gai_strerror(status));
+        return status;
+    }
 	// clean-up
 	freeaddrinfo(res);
 	
@@ -34,9 +32,10 @@ int hostname_to_ip(const char *hostname, char *ipstr) {
 
 // PRE: Connects host (server) with joinee (client)
 // POST: Returns 0 on success, 1 otherwise
-int connect_players(int *socket_serv, int *socket_cl, 
-                    struct sockaddr_in *server,
-                    struct sockaddr_in *client, enum MODE mode) {
+int connect_players(int *socket_listen, int *socket_peer, enum MODE mode) {
+    assert(socket_listen != NULL && socket_peer != NULL);
+    int status;
+    
 	if (mode == HOST) {
 		// Fetch hostname
 		char my_hostname[HOST_NAME_MAX];
@@ -47,40 +46,57 @@ int connect_players(int *socket_serv, int *socket_cl,
 		}
 		printf("Hosting from: %s\n", my_hostname);
 		
+        struct addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;  // IPv4
+        hints.ai_socktype = SOCK_STREAM;  // TCP
+        hints.ai_flags = AI_PASSIVE;  // suitable for binding
+        
+        struct addrinfo *bind_address;
+        
+        if ((status = getaddrinfo(NULL, PORT, &hints, &bind_address))) {
+            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+            return status;
+        }
+        
 		// Initializing socket
-		*socket_serv = socket(AF_INET, SOCK_STREAM, 0);
-		if (*socket_serv == -1) {
-			fprintf(stderr, "Could not create socket\n");
-			return 1;
+		*socket_listen = socket(bind_address->ai_family, 
+            bind_address->ai_socktype, bind_address->ai_protocol);
+            
+		if (*socket_listen < 0) {
+			perror("Failed to create socket");
+            return *socket_listen;
 		}
 		printf("Socket created\n");
 		
-		memset(server, 0, sizeof(server[0]));
-		server->sin_family = AF_INET;
-		server->sin_addr.s_addr = INADDR_ANY;
-		server->sin_port = htons( PORT );
-		
 		// Bind socket
-		if (bind(*socket_serv, (struct sockaddr *)server, sizeof(server[0])) < 0) {
-			perror("Bind failed. Error");
-			return 1;
+		if ((status = bind(*socket_listen, bind_address->ai_addr, 
+                bind_address->ai_addrlen)) < 0) {
+			perror("Failed to bind socket");
+			return status;
 		}
+        // Free resources
+        freeaddrinfo(bind_address);
 		printf("Bind done\n");
 		
 		// Listen for 1 client
-		if (listen(*socket_serv, 1) < 0) {
+		if (listen(*socket_listen, 1) < 0) {
             perror("Listen failed. Error");
             return 1;
         }
 		
 		// Accept any incoming connection
 		printf("Waiting for opponent to join...\n");
-		int c;
 		
-		*socket_cl = accept(*socket_serv, (struct sockaddr *)client, (socklen_t *)&c);
-		if (*socket_cl < 0) {
-			perror("Accept failed");
-			return 1;
+        struct sockaddr_storage client_address;
+        socklen_t client_len = sizeof(client_address);
+        
+		*socket_peer = accept(*socket_listen, (struct sockaddr *)&client_address,
+            &client_len);
+            
+		if (*socket_peer < 0) {
+			perror("Failed to accept client");
+			return *socket_peer;
 		}
 		printf("Connection successful\n");
 		
@@ -91,27 +107,41 @@ int connect_players(int *socket_serv, int *socket_cl,
 		printf("Enter hostname: ");
 		while (!is_valid_input(scanf("%s", hostname), 1));
 		
-		*socket_cl = socket(AF_INET, SOCK_STREAM, 0);
-		if (*socket_cl == -1) {
-			printf("Could not create socket\n");
+        // Find IP address of host
+        if ((status = hostname_to_ip(hostname, ipstr))) {
+			return status;
+		}
+		printf("Host found at: %s\n", ipstr);
+        
+        struct addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        
+        struct addrinfo *peer_address;
+        
+        if ((status = getaddrinfo(ipstr, PORT, &hints, &peer_address))) {
+            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+            return status;
+        }
+        
+		*socket_peer = socket(peer_address->ai_family, 
+            peer_address->ai_socktype, peer_address->ai_protocol);
+        
+		if (*socket_peer < 0) {
+			perror("Failed to create socket");
+            return *socket_peer;
 		}
 		printf("Socket created\n");
 		
-		if (hostname_to_ip(hostname, ipstr) != 0) {
-			return 1;
-		}
-		printf("Host found at: %s\n", ipstr);
-		
-		memset(server, 0, sizeof(server[0]));
-		server->sin_addr.s_addr = inet_addr(ipstr);
-		server->sin_family = AF_INET;
-		server->sin_port = htons( PORT );
-		
 		// Connect to host
-		if (connect(*socket_cl, (struct sockaddr *)server, sizeof(server[0])) < 0) {
+		if ((status = connect(*socket_peer, peer_address->ai_addr, 
+                peer_address->ai_addrlen) < 0)) {
 			perror("Connect failed. Error");
-			return 1;
+			return status;
 		}
+        // Free resources
+        freeaddrinfo(peer_address);
 		printf("Connected to host\n");
 	}
 	return 0;
@@ -120,27 +150,27 @@ int connect_players(int *socket_serv, int *socket_cl,
 // PRE: Send 'send buffer' to opponent and receive opponent buffer in
 //      Receive buffer
 // POST: -
-int sendrecv(const int socket_cl, void *send_buf, void *recv_buf,
+int sendrecv(const int socket_peer, void *send_buf, void *recv_buf,
              size_t message_size, enum MODE mode) {
 	if (mode == HOST) {
 		printf("Sending to opponent...\n");
-		if (write(socket_cl, send_buf, message_size) < 0) {
+		if (send(socket_peer, send_buf, message_size, 0) < 0) {
 			perror("Send failed");
 			return 1;
 		}
 		printf("Waiting for opponent...\n");
-		if (recv(socket_cl, recv_buf, message_size, 0) <= 0) {
+		if (recv(socket_peer, recv_buf, message_size, 0) <= 0) {
 			perror("Recv failed");
 			return 1;
 		}
 	} else {
 		printf("Sending to opponent...\n");
-		if (send(socket_cl, send_buf, message_size, 0) < 0) {
+		if (send(socket_peer, send_buf, message_size, 0) < 0) {
 			perror("Send failed");
 			return 1;
 		}
 		printf("Waiting for opponent...\n");
-		if (recv(socket_cl, recv_buf, message_size, 0) <= 0) {
+		if (recv(socket_peer, recv_buf, message_size, 0) <= 0) {
 			perror("Receive failed");
 			return 1;
 		}
@@ -150,7 +180,7 @@ int sendrecv(const int socket_cl, void *send_buf, void *recv_buf,
 
 // PRE: Exchange shots between player and opponent
 // POST: Returns 1 on error and 0 otherwise
-int exchange_shots(const int socket_cl, size_t coord_size, 
+int exchange_shots(const int socket_peer, size_t coord_size, 
                    int *player_coords, char *player_board, const int *player_map, 
                    struct ship_t *player_ships, int *player_ship_count, 
                    int *opponent_coords, char *opponent_board, const int *opponent_map,
@@ -162,7 +192,7 @@ int exchange_shots(const int socket_cl, size_t coord_size,
     
 	if (mode == HOST) {
 		printf("Waiting for opponent's move...\n");
-		if (recv(socket_cl, opponent_coords, coord_size, 0) <= 0) {
+		if (recv(socket_peer, opponent_coords, coord_size, 0) <= 0) {
 			perror("Target recv failed");
 			return 1;
 		}
@@ -186,7 +216,7 @@ int exchange_shots(const int socket_cl, size_t coord_size,
 		// Print results
 		print_results(row, col, is_hit, SELF);
 		// Send shoot coordinates to opponent
-		if (write(socket_cl, player_coords, coord_size) < 0) {
+		if (send(socket_peer, player_coords, coord_size, 0) < 0) {
 			perror("Send failed");
 			return 1;
 		}
@@ -204,12 +234,12 @@ int exchange_shots(const int socket_cl, size_t coord_size,
 		// Print results
 		print_results(row, col, is_hit, SELF);
 		// Send shoot coordinates to opponent
-		if (send(socket_cl, player_coords, coord_size, 0) < 0) {
+		if (send(socket_peer, player_coords, coord_size, 0) < 0) {
 			perror("Send failed");
 			return 1;
 		}
 		printf("Waiting for opponent's move...\n");
-		if (recv(socket_cl, opponent_coords, coord_size, 0) <= 0) {
+		if (recv(socket_peer, opponent_coords, coord_size, 0) <= 0) {
 			perror("Target recv failed");
 			return 1;
 		}

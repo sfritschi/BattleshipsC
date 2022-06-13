@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <limits.h>
+#include <assert.h>
 
 // PRE: Name of host in network
 // POST: Returns ip address (string)
@@ -16,8 +17,7 @@ int hostname_to_ip(const char *, char *);
 
 // PRE: Connects host (server) with joinee (client)
 // POST: Returns 0 on success, 1 otherwise
-int connect_players(int *, int *, struct sockaddr_in *, 
-                    struct sockaddr_in *, enum MODE);
+int connect_players(int *, int *, enum MODE);
 
 // PRE: Send 'send buffer' to opponent and receive opponent buffer in
 //      'receive buffer'
