@@ -54,7 +54,7 @@ int hostname_to_ip(const char *hostname, char *ipstr) {
 	hints.ai_family = AF_INET;  // IPv4
 	hints.ai_socktype = SOCK_STREAM;
 	
-	if ((status = getaddrinfo(hostname, PORT, &hints, &res))) {
+	if ((status = getaddrinfo(hostname, NULL, &hints, &res))) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
 		return status;
 	}
