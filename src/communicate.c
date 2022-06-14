@@ -52,7 +52,6 @@ int hostname_to_ip(const char *hostname, char *ipstr) {
 	// Initialize hints
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;  // IPv4
-	hints.ai_socktype = SOCK_STREAM;
 	
 	if ((status = getaddrinfo(hostname, NULL, &hints, &res))) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
@@ -146,7 +145,6 @@ int connect_players(int *socket_listen, int *socket_peer, enum MODE mode) {
 		
 		printf("Enter hostname: ");
 		while (!is_valid_input(scanf("%s", hostname), 1));
-		
         // Find IP address of host
         if ((status = hostname_to_ip(hostname, ipstr))) {
 			return status;
