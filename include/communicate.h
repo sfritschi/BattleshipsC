@@ -11,6 +11,14 @@
 #include <limits.h>
 #include <assert.h>
 
+// PRE: Socket of peer and send buffer + length
+// POST: Blocks until all data has been successfully sent
+int send_full(const int, const void *, int);
+
+// PRE: Socket of peer and receive buff + length
+// POST: Blocks until all data has been successfully received
+int recv_full(const int, const void *, int);
+
 // PRE: Name of host in network
 // POST: Returns ip address (string)
 int hostname_to_ip(const char *, char *);
@@ -22,11 +30,11 @@ int connect_players(int *, int *, enum MODE);
 // PRE: Send 'send buffer' to opponent and receive opponent buffer in
 //      'receive buffer'
 // POST: -
-int sendrecv(const int, void *, void *, size_t, enum MODE);
+int sendrecv(const int, const void *, const void *, int, enum MODE);
 
 // PRE: Exchange shots between player and opponent
 // POST: Returns 1 on error and 0 otherwise
-int exchange_shots(const int, size_t, 
+int exchange_shots(const int, int, 
                    int *, char *, const int *, 
                    struct ship_t *, int *, 
                    int *, char *, const int *,

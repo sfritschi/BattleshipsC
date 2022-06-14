@@ -3,6 +3,46 @@
 
 #define PORT "8888"
 
+// PRE: Socket of peer and send buffer + length
+// POST: Blocks until all data has been successfully sent
+int send_full(const int socket_peer, const void *buf, int message_len) {
+    int begin = 0;
+    int bytes_sent;
+    
+    while (begin < message_len) {
+        bytes_sent = send(socket_peer, (void *)((char *)buf + begin), 
+            message_len - begin, 0);
+        if (bytes_sent < 0) {
+            return bytes_sent;  // error
+        }
+        begin += bytes_sent;
+    }
+    // DEBUG
+    assert(begin == message_len);
+    
+    return begin;
+}
+
+// PRE: Socket of peer and receive buff + length
+// POST: Blocks until all data has been successfully received
+int recv_full(const int socket_peer, const void *buf, int message_len) {
+    int begin = 0;
+    int bytes_recv;
+    
+    while (begin < message_len) {
+        bytes_recv = recv(socket_peer, (void *)((char *)buf + begin), 
+            message_len - begin, 0);
+        if (bytes_recv <= 0) {
+            return bytes_recv;  // error/shutdown
+        }
+        begin += bytes_recv;
+    }
+    // DEBUG
+    assert(begin == message_len);
+    
+    return begin;
+}
+
 // PRE: Name of host in network
 // POST: Returns ip address (string)
 int hostname_to_ip(const char *hostname, char *ipstr) {
@@ -149,28 +189,28 @@ int connect_players(int *socket_listen, int *socket_peer, enum MODE mode) {
 
 // PRE: Send 'send buffer' to opponent and receive opponent buffer in
 //      Receive buffer
-// POST: -
-int sendrecv(const int socket_peer, void *send_buf, void *recv_buf,
-             size_t message_size, enum MODE mode) {
+// POST: 0 on success 1 on error/shutdown
+int sendrecv(const int socket_peer, const void *send_buf, 
+        const void *recv_buf, int message_size, enum MODE mode) {
 	if (mode == HOST) {
 		printf("Sending to opponent...\n");
-		if (send(socket_peer, send_buf, message_size, 0) < 0) {
+		if (send_full(socket_peer, send_buf, message_size) < 0) {
 			perror("Send failed");
 			return 1;
 		}
 		printf("Waiting for opponent...\n");
-		if (recv(socket_peer, recv_buf, message_size, 0) <= 0) {
+		if (recv_full(socket_peer, recv_buf, message_size) <= 0) {
 			perror("Recv failed");
 			return 1;
 		}
 	} else {
 		printf("Sending to opponent...\n");
-		if (send(socket_peer, send_buf, message_size, 0) < 0) {
+		if (send_full(socket_peer, send_buf, message_size) < 0) {
 			perror("Send failed");
 			return 1;
 		}
 		printf("Waiting for opponent...\n");
-		if (recv(socket_peer, recv_buf, message_size, 0) <= 0) {
+		if (recv_full(socket_peer, recv_buf, message_size) <= 0) {
 			perror("Receive failed");
 			return 1;
 		}
@@ -180,7 +220,7 @@ int sendrecv(const int socket_peer, void *send_buf, void *recv_buf,
 
 // PRE: Exchange shots between player and opponent
 // POST: Returns 1 on error and 0 otherwise
-int exchange_shots(const int socket_peer, size_t coord_size, 
+int exchange_shots(const int socket_peer, int coord_size, 
                    int *player_coords, char *player_board, const int *player_map, 
                    struct ship_t *player_ships, int *player_ship_count, 
                    int *opponent_coords, char *opponent_board, const int *opponent_map,
@@ -192,7 +232,7 @@ int exchange_shots(const int socket_peer, size_t coord_size,
     
 	if (mode == HOST) {
 		printf("Waiting for opponent's move...\n");
-		if (recv(socket_peer, opponent_coords, coord_size, 0) <= 0) {
+		if (recv_full(socket_peer, opponent_coords, coord_size) <= 0) {
 			perror("Target recv failed");
 			return 1;
 		}
@@ -216,7 +256,7 @@ int exchange_shots(const int socket_peer, size_t coord_size,
 		// Print results
 		print_results(row, col, is_hit, SELF);
 		// Send shoot coordinates to opponent
-		if (send(socket_peer, player_coords, coord_size, 0) < 0) {
+		if (send_full(socket_peer, player_coords, coord_size) < 0) {
 			perror("Send failed");
 			return 1;
 		}
@@ -234,12 +274,12 @@ int exchange_shots(const int socket_peer, size_t coord_size,
 		// Print results
 		print_results(row, col, is_hit, SELF);
 		// Send shoot coordinates to opponent
-		if (send(socket_peer, player_coords, coord_size, 0) < 0) {
+		if (send_full(socket_peer, player_coords, coord_size) < 0) {
 			perror("Send failed");
 			return 1;
 		}
 		printf("Waiting for opponent's move...\n");
-		if (recv(socket_peer, opponent_coords, coord_size, 0) <= 0) {
+		if (recv_full(socket_peer, opponent_coords, coord_size) <= 0) {
 			perror("Target recv failed");
 			return 1;
 		}

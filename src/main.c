@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
 	}
 	
 	int socket_listen = -1, socket_peer = -1;
-	const size_t board_message_size = BOARD_SIZE * sizeof(char);
-	const size_t map_message_size = BOARD_SIZE * sizeof(int);
-	const size_t coords_message_size = 2 * sizeof(int);
+	const int board_message_size = BOARD_SIZE * sizeof(char);
+	const int map_message_size = BOARD_SIZE * sizeof(int);
+	const int coords_message_size = 2 * sizeof(int);
 	
 	// Connect host (server) with client
 	char mode = *argv[1];
@@ -103,7 +103,7 @@ beginning:
 	// Ask both players if they want a rematch
 	char player_reply;
 	char opponent_reply;
-	size_t reply_size = sizeof(char);
+	int reply_size = sizeof(char);
 	
 	printf("Do you want a rematch? [y/n]: ");
 	while(!is_valid_input(scanf("%*c%c", &player_reply), 1));
